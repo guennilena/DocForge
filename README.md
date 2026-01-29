@@ -66,17 +66,12 @@ The script will:
 
 ## Status
 
-Early prototype / active development.
+Early prototype (v0.1.0).
 
 The current version focuses on:
-
-Excel → HTML generation
-
-clean structure
-
-minimal dependencies
-
-Future enhancements may include syntax highlighting, Markdown export, or additional content types.
+- Excel → HTML generation
+- clean structure
+- minimal dependencies
 
 ## License
 
