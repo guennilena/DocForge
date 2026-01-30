@@ -66,12 +66,13 @@ The script will:
 
 ## Status
 
-Early prototype (v0.1.0).
+Early prototype (v0.2.0).
 
-The current version focuses on:
+Current features:
 - Excel → HTML generation
-- clean structure
-- minimal dependencies
+- Syntax highlighting (Prism.js)
+- Line numbers and copy-to-clipboard for code blocks
+- Minimal dependencies
 
 ## License
 

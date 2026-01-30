@@ -86,6 +86,8 @@ hr { border: none; border-top: 1px solid #eee; margin: 24px 0; }
 $sb = New-Object System.Text.StringBuilder
 [void]$sb.AppendLine('<!DOCTYPE html>')
 [void]$sb.AppendLine('<html><head><meta charset="utf-8" />')
+[void]$sb.AppendLine('<link rel="stylesheet" href="../assets/prism.css" />')
+[void]$sb.AppendLine('<link rel="stylesheet" href="../assets/docforge.css" />')
 [void]$sb.AppendLine('<meta name="viewport" content="width=device-width, initial-scale=1" />')
 [void]$sb.AppendLine('<title>DocForge</title>')
 [void]$sb.AppendLine("<style>$css</style>")
@@ -124,7 +126,7 @@ foreach ($ch in $chapters) {
         'code' {
           $lang = if ($it.Lang) { $it.Lang } else { 'text' }
           $code = HtmlEncode $it.Body
-          [void]$sb.AppendLine(("<pre><code class=""language-{0}"">{1}</code></pre>" -f $lang, $code))
+          [void]$sb.AppendLine(("<pre class='line-numbers'><code class='language-{0}'>{1}</code></pre>" -f $lang, $code))
         }
         'image' {
           # Body should be a relative path from docs/out, e.g. "../images/foo.png" or "images/foo.png"
@@ -144,6 +146,7 @@ foreach ($ch in $chapters) {
   }
 }
 
+[void]$sb.AppendLine('<script src="../assets/prism.js"></script>')
 [void]$sb.AppendLine('</body></html>')
 
 $sb.ToString() | Set-Content -Path $OutFile -Encoding UTF8
