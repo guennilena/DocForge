@@ -64,6 +64,42 @@ The script will:
 - generate docs/out/index.html
 - The Excel file can remain open while the build runs.
 
+## Publishing Convention (Workbooks & HTML)
+
+This repository distinguishes between **development** and **publishable** documentation
+using filename suffixes.
+
+### Development files
+Files containing `_dev` in their name are considered **work in progress** and are **not committed**:
+
+- `*_dev.xlsx`
+- `*_dev.html`
+
+These files are ignored via `.gitignore` and are used for:
+- drafting content
+- experimenting
+- private or temporary documentation
+
+### Publishable files
+When documentation is ready to be shared:
+
+- the `_dev` suffix is removed
+- the file is committed intentionally
+
+Typically:
+- **Excel workbooks (`.xlsx`)** are committed as the source of truth
+- **HTML output** may be committed for demo/showcase purposes, but can also be regenerated locally
+
+### Rationale
+This approach:
+- prevents accidental publication of unfinished content
+- keeps the repository clean and intentional
+- allows others to generate HTML output locally from the Excel sources
+
+> Rule of thumb:  
+> **If it has `_dev` in the name, it stays local.  
+> Removing `_dev` is a conscious publishing decision.**
+
 ## Status
 
 Early prototype (v0.2.0).
