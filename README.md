@@ -102,13 +102,21 @@ This approach:
 
 ## Status
 
-Early prototype (v0.2.0).
+Prototype (v0.3.0).
 
 Current features:
 - Excel → HTML generation
-- Syntax highlighting (Prism.js)
+- Structured content via Chapter / Section
+- Syntax highlighting via Prism.js
 - Line numbers and copy-to-clipboard for code blocks
-- Minimal dependencies
+- Automatic navigation / table of contents
+- Collapsible sections
+- Light / Dark UI toggle (system default + persisted)
+- Minimal dependencies (PowerShell + ImportExcel)
+
+Planned:
+
+- Workbook selection / multi-workbook builds (v0.4.0)
 
 ## License
 

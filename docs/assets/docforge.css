@@ -3,3 +3,189 @@
 div.code-toolbar > .toolbar {
   opacity: 1;
 }
+
+/* =========================
+   Theme tokens
+   ========================= */
+
+:root {
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #666666;
+  --border: #dddddd;
+  --panel: #fafafa;
+  --codebg: #f4f4f4;
+  --link: #0b57d0;
+}
+
+html[data-theme="dark"] {
+  --bg: #0f1115;
+  --fg: #e6e6e6;
+  --muted: #a0a0a0;
+  --border: #2a2f3a;
+  --panel: #151924;
+  --codebg: #151924;
+  --link: #7ab4ff;
+}
+
+/* =========================
+   Base
+   ========================= */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Segoe UI, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Keep Prism code font consistent (Prism may override; this is harmless) */
+code {
+  font-family: Consolas, 'Cascadia Mono', monospace;
+}
+
+/* =========================
+   Header
+   ========================= */
+
+.df-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+
+.df-header__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.df-title {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.df-meta {
+  margin: 6px 0 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.df-theme-toggle {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--fg);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.df-theme-toggle:active {
+  transform: translateY(1px);
+}
+
+/* =========================
+   Layout (Sidebar + Content)
+   ========================= */
+
+.df-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+}
+
+.df-sidebar {
+  position: sticky;
+  top: 76px;
+  align-self: start;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 12px;
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+}
+
+.df-toc-title {
+  font-weight: 700;
+  margin: 6px 0 10px 0;
+}
+
+.df-toc {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.df-toc__ch {
+  margin-top: 10px;
+  font-weight: 700;
+}
+
+.df-toc__sec {
+  margin-top: 6px;
+  margin-left: 12px;
+  font-weight: 500;
+}
+
+.df-content {
+  min-width: 0;
+}
+
+.df-hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 18px 0;
+}
+
+/* =========================
+   Content styling (non-code)
+   ========================= */
+
+.df-h2 {
+  margin-top: 1.8em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2em;
+}
+
+.df-h3 {
+  margin-top: 1.2em;
+}
+
+.df-p {
+  margin: 0.8em 0;
+}
+
+.df-details {
+  margin-top: 1em;
+  padding: 0.6em 0.8em;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.df-summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.df-note {
+  margin: 0.8em 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(-
