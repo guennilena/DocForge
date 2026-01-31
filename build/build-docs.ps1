@@ -1,13 +1,53 @@
 # DocForge - build-docs.ps1
 # Generates docs/out/index.html from docs/source/docs.xlsx (sheet: Content)
 
+param(
+  [string]$Workbook,
+  [switch]$ListWorkbooks
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = Split-Path -Parent $PSScriptRoot
-$SourceXlsx = Join-Path $RepoRoot 'docs\source\docs.xlsx'
+$DefaultWorkbookName = 'docs.xlsx'
 $OutDir     = Join-Path $RepoRoot 'docs\out'
 $OutFile    = Join-Path $OutDir   'index.html'
+
+$SourceDir = Join-Path $RepoRoot 'docs\source'
+
+$workbooks = Get-ChildItem $SourceDir -Filter *.xlsx |
+  Where-Object { $_.Name -notmatch '_dev' }
+
+if ($ListWorkbooks) {
+  $workbooks | ForEach-Object { Write-Host $_.Name }
+  exit 0
+}
+
+# Selection
+$selected = $null
+
+if ($Workbook) {
+  $selected = $workbooks | Where-Object { $_.Name -ieq $Workbook } | Select-Object -First 1
+  if (-not $selected) {
+    $available = ($workbooks | ForEach-Object Name) -join ', '
+    throw "Workbook not found: $Workbook. Available: $available"
+  }
+} else {
+  $selected = $workbooks |
+    Where-Object { $_.Name -ieq $DefaultWorkbookName } |
+    Select-Object -First 1
+
+  if (-not $selected) {
+    $available = ($workbooks | ForEach-Object Name) -join ', '
+    throw "Default workbook '$DefaultWorkbookName' not found in $SourceDir. Available: $available"
+  }
+}
+
+$SourceXlsx = $selected.FullName
+
+Write-Host ("Using workbook: {0}" -f $selected.Name) -ForegroundColor DarkGray
+
 
 function HtmlEncode([string]$s) {
   if ($null -eq $s) { return '' }

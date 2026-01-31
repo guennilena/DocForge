@@ -64,6 +64,20 @@ The script will:
 - generate docs/out/index.html
 - The Excel file can remain open while the build runs.
 
+### Workbook selection
+
+List publishable workbooks:
+
+```powershell
+.\build\build-docs.ps1 -ListWorkbooks
+```
+
+Build a specific workbook:
+
+```powershell
+.\build\build-docs.ps1 -Workbook docs.xlsx
+```
+
 ## Publishing Convention (Workbooks & HTML)
 
 This repository distinguishes between **development** and **publishable** documentation
@@ -102,7 +116,7 @@ This approach:
 
 ## Status
 
-Prototype (v0.3.0).
+Prototype (v0.4.0).
 
 Current features:
 - Excel → HTML generation
@@ -113,10 +127,11 @@ Current features:
 - Collapsible sections
 - Light / Dark UI toggle (system default + persisted)
 - Minimal dependencies (PowerShell + ImportExcel)
+- Workbook selection via build script
 
 Planned:
 
-- Workbook selection / multi-workbook builds (v0.4.0)
+- multi-workbook builds (v0.4.0)
 
 ## License
 
