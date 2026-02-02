@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DocForge - docs</title>
+<link rel="stylesheet" href="../assets/prism.css" />
+<link rel="stylesheet" href="../assets/docforge.css" />
+<script>
+(function(){
+  try {
+    var t = localStorage.getItem('docforge.theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    else {
+      var d = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = d ? 'dark' : 'light';
+    }
+  } catch(e) {}
+})();
+</script>
+</head><body>
+<header class="df-header">
+  <div class="df-header__inner">
+    <div>
+      <h1 class="df-title">DocForge <span style="font-weight:400; font-size:0.95rem; color:var(--muted);">(docs)</span></h1>
+      <p class="df-meta">Generated: 02.02.2026 07:26:21</p>
+    </div>
+    <button class="df-theme-toggle" id="themeToggle" type="button">Toggle theme</button>
+  </div>
+</header>
+<div class="df-layout">
+<aside class="df-sidebar">
+  <div class="df-toc-title">Contents</div>
+  <ul class="df-toc">
+    <li class="df-toc__ch"><a href="#ch-git">Git</a></li>
+    <li class="df-toc__sec"><a href="#sec-git-clone-into-a-new-repository-without-history">Clone into a new repository (without history)</a></li>
+    <li class="df-toc__sec"><a href="#sec-git-first-commit-and-push-to-a-new-repository">First commit and push to a new repository</a></li>
+    <li class="df-toc__sec"><a href="#sec-git-separate-feature-and-documentation-commits">Separate feature and documentation commits</a></li>
+    <li class="df-toc__sec"><a href="#sec-git-mulitple-feature-and-documentation-commits">Mulitple feature and documentation commits</a></li>
+    <li class="df-toc__sec"><a href="#sec-git-create-and-push-a-release-tag">Create and push a release tag</a></li>
+  </ul>
+</aside>
+<main class="df-content">
+<hr class="df-hr" />
+<section id="ch-git" class="df-chapter">
+<h2 class="df-h2">Git</h2>
+<details id="sec-git-clone-into-a-new-repository-without-history" class="df-details">
+<summary class="df-summary">Clone into a new repository (without history)</summary>
+<p class="df-p">Sometimes you want to reuse a repository as a starting point, but keep a completely clean history.</p>
+<pre class='line-numbers df-pre'><code class='language-bash'>git clone https://github.com/original/project.git
+cd project
+rm -rf .git
+git init
+git remote add origin https://github.com/you/new-repo.git
+git add .
+git commit -m &quot;Initial commit&quot;
+git push -u origin main</code></pre>
+<div class="df-note">Removing .git also removes the original remote.<br/>You must explicitly configure a new one before pushing.</div>
+</details>
+<details id="sec-git-first-commit-and-push-to-a-new-repository" class="df-details">
+<summary class="df-summary">First commit and push to a new repository</summary>
+<p class="df-p">After creating a new repository (for example on GitHub), the first commit establishes the initial project state and connects it to the remote.</p>
+<pre class='line-numbers df-pre'><code class='language-bash'>git init
+git add .
+git commit -m &quot;Initial commit&quot;
+git remote add origin https://github.com/you/project.git
+git push -u origin main</code></pre>
+<div class="df-note">The -u flag sets the upstream branch, allowing future git push<br/>and git pull commands without specifying the remote.</div>
+</details>
+<details id="sec-git-separate-feature-and-documentation-commits" class="df-details">
+<summary class="df-summary">Separate feature and documentation commits</summary>
+<p class="df-p">Keeping functional changes and documentation updates in separate commits<br/>improves readability and makes code reviews easier.</p>
+<pre class='line-numbers df-pre'><code class='language-bash'>git restore --staged README.md
+git add build/build-docs.ps1
+git commit -m &quot;feat(build): add multi-workbook support&quot;</code></pre>
+<div class="df-note">This approach makes the intent of each commit explicit<br/>and results in a cleaner project history.</div>
+</details>
+<details id="sec-git-mulitple-feature-and-documentation-commits" class="df-details">
+<summary class="df-summary">Mulitple feature and documentation commits</summary>
+<p class="df-p">Keeping multiple functional changes and documentation update in separate commits<br/>improves readability and makes code reviews easier.</p>
+<pre class='line-numbers df-pre'><code class='language-bash'>git add .
+git restore --staged README.md</code></pre>
+<p class="df-p">Check status of staged files</p>
+<pre class='line-numbers df-pre'><code class='language-bash'>git status
+git diff --staged</code></pre>
+<pre class='line-numbers df-pre'><code class='language-bash'>git commit -m &quot;feat(build): add multi-workbook support&quot;
+git add README.md
+git commit -m &quot;docs: update README for v0.6.0&quot;</code></pre>
+<div class="df-note">This approach makes the intent of each commit explicit<br/>and results in a cleaner project history.</div>
+</details>
+<details id="sec-git-create-and-push-a-release-tag" class="df-details">
+<summary class="df-summary">Create and push a release tag</summary>
+<p class="df-p">Tags are commonly used to mark release points in the repository history.<br/>They can also be created after the fact.</p>
+<pre class='line-numbers df-pre'><code class='language-bash'>git tag v0.6.0
+git push --tags</code></pre>
+<div class="df-note">Tags are lightweight references and do not modify the commit history.<br/>Creating them later is perfectly fine.</div>
+</details>
+</section>
+</main>
+</div>
+<button id="go-to-top" title="Back to top">↑</button>
+<script src="../assets/prism.js"></script>
+<script src="../assets/docforge.js"></script>
+</body></html>
+

@@ -1,33 +1,36 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8" />
-<link rel="stylesheet" href="../assets/prism.css" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DocForge</title>
-<style>body { font-family: Segoe UI, Arial, sans-serif; margin: 40px; max-width: 980px; line-height: 1.5; }
-h1 { margin-bottom: 0.2em; }
-.meta { color: #666; margin-top: 0; }
-h2 { margin-top: 2em; border-bottom: 1px solid #ddd; padding-bottom: 0.2em; }
-h3 { margin-top: 1.2em; }
-details { margin-top: 1em; padding: 0.6em 0.8em; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
-summary { cursor: pointer; font-weight: 600; }
-pre { padding: 12px; border-radius: 8px; overflow-x: auto; background: #f4f4f4; border: 1px solid #e5e5e5; }
-code { font-family: Consolas, 'Cascadia Mono', monospace; font-size: 0.95em; }
-.note { padding: 10px 12px; border-left: 4px solid #999; background: #f7f7f7; border-radius: 6px; }
-img { max-width: 100%; border: 1px solid #ddd; border-radius: 8px; }
-hr { border: none; border-top: 1px solid #eee; margin: 24px 0; }</style>
+<title>DocForge - Index</title>
+<link rel="stylesheet" href="./assets/prism.css" />
+<link rel="stylesheet" href="./assets/docforge.css" />
+<script>
+(function(){
+  try {
+    var t = localStorage.getItem('docforge.theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    else {
+      var d = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = d ? 'dark' : 'light';
+    }
+  } catch(e) {}
+})();
+</script>
 </head><body>
-<h1>DocForge</h1>
-<p class="meta">Generated: 30.01.2026 06:56:55</p>
-<hr />
-<h2>Git</h2>
-<h3>Init → First push</h3>
-<p> Erkl&#228;rung... </p>
-<h2>PowerShell</h2>
-<details>
-<summary>Profil laden</summary>
-<pre class='line-numbers'><code class='language-powershell'> . $PROFILE </code></pre>
-<pre class='line-numbers'><code class='language-powershell'> . $PROFILE </code></pre>
-</details>
-<script src="../assets/prism.js"></script>
+<header class="df-header"><div class="df-header__inner">
+<div>
+<h1 class="df-title">DocForge</h1>
+<p class="df-meta">Generated: 02.02.2026 07:26:21</p>
+</div>
+<button class="df-theme-toggle" id="themeToggle" type="button">Toggle theme</button>
+</div></header>
+<div class="df-layout">
+<main class="df-content">
+<h2 class="df-h2">Workbooks</h2>
+<ul class="df-toc">
+<li class="df-toc__ch"><a href="./docs/">docs.xlsx</a></li>
+</ul>
+</main></div>
+<script src="./assets/docforge.js"></script>
 </body></html>
 

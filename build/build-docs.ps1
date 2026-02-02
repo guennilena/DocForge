@@ -6,66 +6,83 @@
 # - optional landing page -> docs/out/index.html
 # - optional packaging -> docs/out/packages/<workbook>.zip
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
-param(
+param
+(
   [string]$Workbook,       # Build a specific workbook, e.g. docs.xlsx
   [switch]$All,            # Build all publishable workbooks
   [switch]$ListWorkbooks,  # List publishable workbooks and exit
   [switch]$Package         # Create a zip package per built workbook
 )
 
+Set-StrictMode -Version Latest
+
+$ErrorActionPreference = 'Stop'
+
 # ---- Defaults / Paths (config block) ----
 $DefaultWorkbookName = 'docs.xlsx'
 
-$RepoRoot        = Split-Path -Parent $PSScriptRoot
-$SourceDir       = Join-Path $RepoRoot 'docs\source'
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+$SourceDir = Join-Path $RepoRoot 'docs\source'
 $SourceImagesDir = Join-Path $SourceDir 'images'
 
-$OutRoot      = Join-Path $RepoRoot 'docs\out'
+$OutRoot = Join-Path $RepoRoot 'docs\out'
 $OutAssetsDir = Join-Path $OutRoot 'assets'
 $OutImagesDir = Join-Path $OutRoot 'images'
-$OutPackages  = Join-Path $OutRoot 'packages'
-$LandingFile  = Join-Path $OutRoot 'index.html'
+$OutPackages = Join-Path $OutRoot 'packages'
+$LandingFile = Join-Path $OutRoot 'index.html'
 
 # ---- Helpers ----
-function HtmlEncode([string]$s) {
-  if ($null -eq $s) { return '' }
+function HtmlEncode([string]$s)
+{
+  if ($null -eq $s)
+  {
+    return ''
+  }
+
   return [System.Net.WebUtility]::HtmlEncode($s)
 }
 
-function ToBool($v) {
-  if ($null -eq $v) { return $false }
+function ToBool($v)
+{
+  if ($null -eq $v)
+  {
+    return $false
+  }
+  
   $t = ($v.ToString().Trim().ToLowerInvariant())
-  return @('1','true','yes','y','ja').Contains($t)
+  
+  return @('1', 'true', 'yes', 'y', 'ja').Contains($t)
 }
 
-function Slugify([string]$s) {
+function Slugify([string]$s)
+{
   if ($null -eq $s) { return 'x' }
   $t = $s.Trim().ToLowerInvariant()
-  $t = $t -replace 'ä','ae' -replace 'ö','oe' -replace 'ü','ue' -replace 'ß','ss'
-  $t = ($t -replace '[^a-z0-9]+','-').Trim('-')
+  $t = $t -replace 'ä', 'ae' -replace 'ö', 'oe' -replace 'ü', 'ue' -replace 'ß', 'ss'
+  $t = ($t -replace '[^a-z0-9]+', '-').Trim('-')
   if ([string]::IsNullOrWhiteSpace($t)) { $t = 'x' }
   return $t
 }
 
-function Ensure-Dir([string]$p) {
+function Ensure-Dir([string]$p)
+{
   if (-not (Test-Path $p)) { New-Item -ItemType Directory -Path $p | Out-Null }
 }
 
-function Get-PublishableWorkbooks {
+function Get-PublishableWorkbooks
+{
   if (-not (Test-Path $SourceDir)) { throw "Source directory not found: $SourceDir" }
 
   $wbs = Get-ChildItem -Path $SourceDir -File -Filter '*.xlsx' |
-    Where-Object { $_.Name -notlike '~$*' } |
-    Where-Object { $_.Name -notmatch '_dev' } |
-    Sort-Object Name
+  Where-Object { $_.Name -notlike '~$*' } |
+  Where-Object { $_.Name -notmatch '_dev' } |
+  Sort-Object Name
 
   return @($wbs)
 }
 
-function Copy-SharedAssets {
+function Copy-SharedAssets
+{
   # Copies docs/assets/* -> docs/out/assets/*
   $assetsSrc = Join-Path $RepoRoot 'docs\assets'
   if (-not (Test-Path $assetsSrc)) { throw "Assets directory not found: $assetsSrc" }
@@ -74,23 +91,27 @@ function Copy-SharedAssets {
   Copy-Item -Path (Join-Path $assetsSrc '*') -Destination $OutAssetsDir -Recurse -Force
 }
 
-function Copy-ImagesUsedByWorkbook($items) {
+function Copy-ImagesUsedByWorkbook($items)
+{
   # Copies referenced image files from docs/source/images -> docs/out/images (shared)
   $imageItems = $items | Where-Object { $_.Type -eq 'image' -and -not [string]::IsNullOrWhiteSpace($_.Body) }
   if (-not $imageItems -or $imageItems.Count -eq 0) { return }
 
   Ensure-Dir $OutImagesDir
 
-  foreach ($it in $imageItems) {
+  foreach ($it in $imageItems)
+  {
     $name = $it.Body.ToString().Trim()
 
     # No subfolders expected: reject path separators to keep convention strict.
-    if ($name -match '[\\/]' ) {
+    if ($name -match '[\\/]' )
+    {
       throw "Invalid image name '$name'. Convention: Body must be a filename only (no subfolders)."
     }
 
     $src = Join-Path $SourceImagesDir $name
-    if (-not (Test-Path $src)) {
+    if (-not (Test-Path $src))
+    {
       throw "Image not found: $src (referenced in workbook)."
     }
 
@@ -99,7 +120,8 @@ function Copy-ImagesUsedByWorkbook($items) {
   }
 }
 
-function Write-LandingPage($builtWorkbooks) {
+function Write-LandingPage($builtWorkbooks)
+{
   # Minimal landing page linking to each workbook folder.
   Ensure-Dir $OutRoot
 
@@ -139,7 +161,8 @@ function Write-LandingPage($builtWorkbooks) {
   [void]$sb.AppendLine('<h2 class="df-h2">Workbooks</h2>')
   [void]$sb.AppendLine('<ul class="df-toc">')
 
-  foreach ($wb in $builtWorkbooks) {
+  foreach ($wb in $builtWorkbooks)
+  {
     $base = $wb.BaseName
     [void]$sb.AppendLine(('<li class="df-toc__ch"><a href="./{0}/">{1}</a></li>' -f (HtmlEncode $base), (HtmlEncode $wb.Name)))
   }
@@ -154,7 +177,8 @@ function Write-LandingPage($builtWorkbooks) {
   Write-Host "Generated landing: $LandingFile" -ForegroundColor Green
 }
 
-function Package-Workbook([System.IO.DirectoryInfo]$WorkbookOutDir, [System.IO.FileInfo]$WorkbookFile) {
+function Package-Workbook([System.IO.DirectoryInfo]$WorkbookOutDir, [System.IO.FileInfo]$WorkbookFile)
+{
   # Create a portable zip that contains:
   # <base>/
   #   index.html
@@ -187,17 +211,23 @@ function Package-Workbook([System.IO.DirectoryInfo]$WorkbookOutDir, [System.IO.F
 }
 
 # ---- Preconditions (ImportExcel) ----
-if (-not (Get-Module -ListAvailable -Name ImportExcel)) {
+if (-not (Get-Module -ListAvailable -Name ImportExcel))
+{
   Write-Host "Module 'ImportExcel' not found. Installing for CurrentUser..." -ForegroundColor Yellow
   Install-Module ImportExcel -Scope CurrentUser -Force
 }
 Import-Module ImportExcel
 
 # ---- Workbook selection ----
-$workbooks = Get-PublishableWorkbooks
+$workbooks = @(
+  Get-ChildItem $SourceDir -Filter *.xlsx |
+  Where-Object { $_.Name -notmatch '_dev' }
+)
 
-if ($ListWorkbooks) {
-  if ($workbooks.Count -eq 0) {
+if ($ListWorkbooks)
+{
+  if ($workbooks.Count -eq 0)
+  {
     Write-Host "No publishable workbooks found in: $SourceDir" -ForegroundColor Yellow
     Write-Host "Hint: workbooks containing '_dev' are ignored by convention." -ForegroundColor DarkGray
     exit 0
@@ -208,24 +238,32 @@ if ($ListWorkbooks) {
   exit 0
 }
 
-if ($workbooks.Count -eq 0) {
+if ($workbooks.Count -eq 0)
+{
   throw "No publishable workbooks found in: $SourceDir"
 }
 
 $toBuild = @()
 
-if ($All) {
+if ($All)
+{
   $toBuild = $workbooks
-} elseif ($Workbook) {
+}
+elseif ($Workbook)
+{
   $sel = $workbooks | Where-Object { $_.Name -ieq $Workbook } | Select-Object -First 1
-  if (-not $sel) {
+  if (-not $sel)
+  {
     $available = ($workbooks | ForEach-Object Name) -join ', '
     throw "Workbook not found: $Workbook. Available: $available"
   }
   $toBuild = @($sel)
-} else {
+}
+else
+{
   $sel = $workbooks | Where-Object { $_.Name -ieq $DefaultWorkbookName } | Select-Object -First 1
-  if (-not $sel) {
+  if (-not $sel)
+  {
     $available = ($workbooks | ForEach-Object Name) -join ', '
     throw "Default workbook '$DefaultWorkbookName' not found in $SourceDir. Available: $available"
   }
@@ -238,7 +276,8 @@ Copy-SharedAssets
 
 $built = @()
 
-function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
+function Build-OneWorkbook([System.IO.FileInfo]$Xlsx)
+{
   Write-Host ("Using workbook: {0}" -f $Xlsx.Name) -ForegroundColor DarkGray
 
   $SourceXlsx = $Xlsx.FullName
@@ -250,56 +289,75 @@ function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
 
   # --- Load content ---
   $rows = Import-Excel -Path $SourceXlsx -WorksheetName 'Content'
-  if (-not $rows -or $rows.Count -eq 0) {
+  if (-not $rows -or $rows.Count -eq 0)
+  {
     throw "No rows found in worksheet 'Content' in $SourceXlsx"
   }
 
   # Normalize + validate minimal fields
-  $items = foreach ($r in $rows) {
+  $items = foreach ($r in $rows)
+  {
     if ([string]::IsNullOrWhiteSpace($r.Chapter) -or
-        [string]::IsNullOrWhiteSpace($r.Section) -or
-        [string]::IsNullOrWhiteSpace($r.Type)) { continue }
+      [string]::IsNullOrWhiteSpace($r.Section) -or
+      [string]::IsNullOrWhiteSpace($r.Type)) { continue }
 
     [pscustomobject]@{
-      Chapter   = $r.Chapter.ToString().Trim()
-      Section   = $r.Section.ToString().Trim()
-      Order     = if ($r.Order) { [int]$r.Order } else { 0 }
-      Type      = $r.Type.ToString().Trim().ToLowerInvariant()
-      Lang      = if ($r.Lang) { $r.Lang.ToString().Trim().ToLowerInvariant() } else { '' }
-      Body      = if ($r.Body) { $r.Body.ToString() } else { '' }
-      Collapsed = ToBool $r.Collapsed
+      Chapter      = $r.Chapter.ToString().Trim()
+      ChapterOrder = if ($r.ChapterOrder) { [int]$r.ChapterOrder } else { 0 }
+      Section      = $r.Section.ToString().Trim()
+      SectionOrder = if ($r.SectionOrder) { [int]$r.SectionOrder } else { 0 }
+      Order        = if ($r.Order) { [int]$r.Order } else { 0 }
+      Type         = $r.Type.ToString().Trim().ToLowerInvariant()
+      Lang         = if ($r.Lang) { $r.Lang.ToString().Trim().ToLowerInvariant() } else { '' }
+      Body         = if ($r.Body) { $r.Body.ToString() } else { '' }
+      Collapsed    = ToBool $r.Collapsed
     }
   }
 
-  if ($items.Count -eq 0) {
+  if ($items.Count -eq 0)
+  {
     throw "No usable rows (need Chapter, Section, Type) in $SourceXlsx."
   }
+
+  $items = $items | Sort-Object ChapterOrder, Chapter, SectionOrder, Section, Order
 
   # Copy referenced images (shared)
   Copy-ImagesUsedByWorkbook $items
 
   # Group: Chapter -> Section -> Items
-  $chapters = $items | Sort-Object Chapter, Section, Order | Group-Object Chapter
+  $chapters = $items | Group-Object Chapter
 
   # --- Build TOC model + stable ids ---
   $idCounts = @{}
-  function NextId([string]$prefix, [string]$name) {
+  function NextId([string]$prefix, [string]$name)
+  {
     $slug = Slugify $name
-    $key  = "$prefix-$slug"
+    $key = "$prefix-$slug"
     if (-not $idCounts.ContainsKey($key)) { $idCounts[$key] = 1; return $key }
     $idCounts[$key]++
     return "$key-$($idCounts[$key])"
   }
 
   $toc = @()
-  foreach ($ch in $chapters) {
+  foreach ($ch in $chapters)
+  {
     $chId = NextId 'ch' $ch.Name
+
+
+    #$secGroups = $ch.Group | Sort-Object SectionOrder, Section, Order | Group-Object Section
+
     $secGroups = $ch.Group | Group-Object Section
+
+    $secGroups = $secGroups | Sort-Object @{ Expression = { ($_.Group | Sort-Object Order | Select-Object -First 1).SectionOrder } }, Name
+
+
     $secs = @()
-    foreach ($sec in ($secGroups | Sort-Object Name)) {
+    foreach ($sec in $secGroups)
+    {
+      $first = $sec.Group | Sort-Object Order | Select-Object -First 1
+      $collapsed = $first.Collapsed
       $secId = NextId 'sec' ($ch.Name + '-' + $sec.Name)
-      $collapsed = (($sec.Group | Sort-Object Order | Select-Object -First 1).Collapsed)
-      $secs += [pscustomobject]@{ Name = $sec.Name; Id = $secId; Collapsed = $collapsed }
+      $secs += [pscustomobject]@{ Name = $sec.Name; Id = $secId; Collapsed = $first.Collapsed }
     }
     $toc += [pscustomobject]@{ Name = $ch.Name; Id = $chId; Sections = $secs }
   }
@@ -350,9 +408,11 @@ function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
   [void]$sb.AppendLine('<aside class="df-sidebar">')
   [void]$sb.AppendLine('  <div class="df-toc-title">Contents</div>')
   [void]$sb.AppendLine('  <ul class="df-toc">')
-  foreach ($ch in $toc) {
+  foreach ($ch in $toc)
+  {
     [void]$sb.AppendLine(('    <li class="df-toc__ch"><a href="#{0}">{1}</a></li>' -f $ch.Id, (HtmlEncode $ch.Name)))
-    foreach ($s in $ch.Sections) {
+    foreach ($s in $ch.Sections)
+    {
       [void]$sb.AppendLine(('    <li class="df-toc__sec"><a href="#{0}">{1}</a></li>' -f $s.Id, (HtmlEncode $s.Name)))
     }
   }
@@ -363,7 +423,8 @@ function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
   [void]$sb.AppendLine('<main class="df-content">')
   [void]$sb.AppendLine('<hr class="df-hr" />')
 
-  foreach ($ch in $chapters) {
+  foreach ($ch in $chapters)
+  {
     $chapterName = $ch.Name
     $chEntry = $toc | Where-Object { $_.Name -eq $chapterName } | Select-Object -First 1
     $chId = $chEntry.Id
@@ -371,50 +432,67 @@ function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
     [void]$sb.AppendLine(("<section id=""{0}"" class=""df-chapter"">" -f $chId))
     [void]$sb.AppendLine(("<h2 class=""df-h2"">{0}</h2>" -f (HtmlEncode $chapterName)))
 
+    #$sections = $ch.Group | Sort-Object SectionOrder, Section | Group-Object Section
+
     $sections = $ch.Group | Group-Object Section
-    foreach ($sec in ($sections | Sort-Object Name)) {
+
+    $sections = $sections | Sort-Object @{ Expression = { ($_.Group | Sort-Object Order | Select-Object -First 1).SectionOrder } }, Name
+
+    foreach ($sec in ($sections))
+    {
       $sectionName = $sec.Name
-      $secItems    = $sec.Group | Sort-Object Order
-      $collapsed   = ($secItems | Select-Object -First 1).Collapsed
+      $secItems = $sec.Group | Sort-Object Order
+      $collapsed = ($secItems | Select-Object -First 1).Collapsed
 
       $secEntry = ($chEntry.Sections | Where-Object { $_.Name -eq $sectionName } | Select-Object -First 1)
       $secId = $secEntry.Id
 
-      if ($collapsed) {
+      if ($collapsed)
+      {
         [void]$sb.AppendLine(("<details id=""{0}"" class=""df-details"">" -f $secId))
         [void]$sb.AppendLine(("<summary class=""df-summary"">{0}</summary>" -f (HtmlEncode $sectionName)))
-      } else {
+      }
+      else
+      {
         [void]$sb.AppendLine(("<h3 id=""{0}"" class=""df-h3"">{1}</h3>" -f $secId, (HtmlEncode $sectionName)))
       }
 
-      foreach ($it in $secItems) {
-        switch ($it.Type) {
-          'text' {
+      foreach ($it in $secItems)
+      {
+        switch ($it.Type)
+        {
+          'text'
+          {
             $p = (HtmlEncode $it.Body) -replace "(\r\n|\n)", "<br/>"
             [void]$sb.AppendLine("<p class=""df-p"">$p</p>")
           }
-          'note' {
+          'note'
+          {
             $p = (HtmlEncode $it.Body) -replace "(\r\n|\n)", "<br/>"
             [void]$sb.AppendLine("<div class=""df-note"">$p</div>")
           }
-          'code' {
+          'code'
+          {
             $lang = if ($it.Lang) { $it.Lang } else { 'text' }
             $code = HtmlEncode $it.Body
             [void]$sb.AppendLine(("<pre class='line-numbers df-pre'><code class='language-{0}'>{1}</code></pre>" -f $lang, $code))
           }
-          'image' {
+          'image'
+          {
             $name = HtmlEncode $it.Body.Trim()
             # Shared images: workbook index.html -> ../images/<filename>
             [void]$sb.AppendLine(("<p class=""df-p""><img class=""df-img"" src=""../images/{0}"" alt=""{1}"" /></p>" -f $name, (HtmlEncode $sectionName)))
           }
-          default {
+          default
+          {
             $p = (HtmlEncode $it.Body) -replace "(\r\n|\n)", "<br/>"
             [void]$sb.AppendLine("<p class=""df-p"">$p</p>")
           }
         }
       }
 
-      if ($collapsed) {
+      if ($collapsed)
+      {
         [void]$sb.AppendLine('</details>')
       }
     }
@@ -424,6 +502,8 @@ function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
 
   [void]$sb.AppendLine('</main>')
   [void]$sb.AppendLine('</div>') # df-layout
+
+  [void]$sb.AppendLine('<button id="go-to-top" title="Back to top">↑</button>')
 
   # Scripts
   [void]$sb.AppendLine('<script src="../assets/prism.js"></script>')
@@ -437,11 +517,13 @@ function Build-OneWorkbook([System.IO.FileInfo]$Xlsx) {
 }
 
 # ---- Build ----
-foreach ($wb in $toBuild) {
+foreach ($wb in $toBuild)
+{
   $outDirInfo = Build-OneWorkbook $wb
   $built += $wb
 
-  if ($Package) {
+  if ($Package)
+  {
     Package-Workbook $outDirInfo $wb
   }
 }
