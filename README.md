@@ -171,7 +171,7 @@ This approach:
 
 ## Status
 
-Prototype (v0.5.0).
+Prototype (v0.6.0).
 
 Current features:
 - Excel → HTML generation
@@ -186,6 +186,9 @@ Current features:
 - Shared images
 - Optional portable ZIP packages
 - Minimal dependencies (PowerShell + ImportExcel)
+- Git workflow documentation (example workbook)
+- Content-focused documentation (workflows over command reference)
+- Go-to-top navigation for long documents
 
 ## License
 
