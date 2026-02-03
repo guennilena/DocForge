@@ -181,9 +181,11 @@ function Package-Workbook([System.IO.DirectoryInfo]$WorkbookOutDir, [System.IO.F
 {
   # Create a portable zip that contains:
   # <base>/
-  #   index.html
   #   assets/
   #   images/
+  #   <base>/
+  #     index.html
+
   Ensure-Dir $OutPackages
 
   $base = $WorkbookFile.BaseName
@@ -192,18 +194,25 @@ function Package-Workbook([System.IO.DirectoryInfo]$WorkbookOutDir, [System.IO.F
   $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("docforge-pack-{0}-{1}" -f $base, ([Guid]::NewGuid().ToString('N')))
   Ensure-Dir $temp
 
+  # package root folder (top-level inside zip)
   $root = Join-Path $temp $base
   Ensure-Dir $root
 
-  # Copy workbook output
-  Copy-Item -Path (Join-Path $WorkbookOutDir.FullName '*') -Destination $root -Recurse -Force
+  # workbook folder inside package root (so ../assets works)
+  $wbRoot = Join-Path $root $base
+  Ensure-Dir $wbRoot
 
-  # Copy shared assets + images into the package root
+  # Copy workbook output (index.html etc.) into <base>/<base>/
+  Copy-Item -Path (Join-Path $WorkbookOutDir.FullName '*') -Destination $wbRoot -Recurse -Force
+
+  # Copy shared assets + images into <base>/assets and <base>/images
   if (Test-Path $OutAssetsDir) { Copy-Item -Path $OutAssetsDir -Destination $root -Recurse -Force }
   if (Test-Path $OutImagesDir) { Copy-Item -Path $OutImagesDir -Destination $root -Recurse -Force }
 
   if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-  Compress-Archive -Path (Join-Path $temp '*') -DestinationPath $zipPath
+
+  # Zip the top-level base folder
+  Compress-Archive -Path (Join-Path $temp $base) -DestinationPath $zipPath
 
   Remove-Item $temp -Recurse -Force
 
