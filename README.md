@@ -118,7 +118,7 @@ Create portable zip packages:
 
 Each package contains a complete, self-contained HTML documentation
 including assets and images.
-
+$OutDir
 ### Images
 
 Image files are shared across all documentations.
