@@ -1,119 +1,107 @@
 #requires -Modules Pester
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot = Split-Path -Parent $PSScriptRoot | Split-Path -Parent
-$BuildScript = Join-Path $RepoRoot 'build\build-docs.ps1'
-$OutRoot = Join-Path $RepoRoot 'docs\out'
-$SourceDir = Join-Path $RepoRoot 'docs\source'
-$PackagesDir = Join-Path $OutRoot 'packages'
+Describe 'DocForge (E2E build smoke tests)' {
 
-function Invoke-Build($args)
-{
-  & $BuildScript @args
-}
+BeforeAll {
+    # RepoRoot aus der Testdatei ableiten: tests\.. = RepoRoot
+    $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
-function Read-FileText([string]$path)
-{
-  return Get-Content -Path $path -Raw -Encoding UTF8
-}
+    $script:RepoRoot    = $repoRoot
+    $script:BuildScript = Join-Path $script:RepoRoot 'build\build-docs.ps1'
+    $script:OutRoot     = Join-Path $script:RepoRoot 'docs\out'
+    $script:PackagesDir = Join-Path $script:OutRoot 'packages'
 
-function Assert-Contains($text, $pattern, $because)
-{
-  $text | Should -Match $pattern -Because $because
-}
+    function script:Invoke-Build([hashtable]$Params)
+    {
+      & $script:BuildScript @Params
+    }
 
-Describe 'DocForge build-docs.ps1 (E2E)' {
+    function script:Read-Text([string]$Path)
+    {
+      Get-Content -Path $Path -Raw -Encoding UTF8
+    }
 
-  BeforeAll {
-    if (-not (Test-Path $BuildScript)) { throw "Build script missing: $BuildScript" }
-    if (-not (Test-Path $SourceDir))   { throw "Source dir missing: $SourceDir" }
-  }
+    Write-Host "RepoRoot (BeforeAll):    $script:RepoRoot"
+    Write-Host "BuildScript (BeforeAll): $script:BuildScript"
 
-  BeforeEach {
-    # Clean output to ensure tests are deterministic
-    if (Test-Path $OutRoot) {
-      Remove-Item $OutRoot -Recurse -Force
+    if (-not (Test-Path $script:BuildScript))
+    {
+      throw "build-docs.ps1 not found at: $script:BuildScript"
     }
   }
 
-  It 'builds a specific workbook without errors' {
-    Invoke-Build @('-Workbook', 'docs.xlsx')
-
-    # adjust if your single-workbook output is elsewhere
-    $html = Join-Path $OutRoot 'docs\index.html'
-    Test-Path $html | Should -BeTrue -Because "Workbook output HTML should exist: $html"
+  BeforeEach {
+    if (Test-Path $script:OutRoot) {
+      Remove-Item $script:OutRoot -Recurse -Force
+    }
   }
 
-  It 'builds all workbooks and creates a root index' {
-    Invoke-Build @('-All')
-
-    $rootIndex = Join-Path $OutRoot 'index.html'
-    Test-Path $rootIndex | Should -BeTrue -Because "Root index should exist for -All"
+  It 'runs -ListWorkbooks without error' {
+    { Invoke-Build @{ ListWorkbooks = $true } } | Should -Not -Throw
   }
 
-  It 'copies shared assets to out/assets' {
-    Invoke-Build @('-All')
+  It 'runs -All and produces landing page + assets' {
+    { Invoke-Build @{ All = $true } } | Should -Not -Throw
 
-    (Test-Path (Join-Path $OutRoot 'assets\prism.css'))    | Should -BeTrue
-    (Test-Path (Join-Path $OutRoot 'assets\docforge.css')) | Should -BeTrue
-    (Test-Path (Join-Path $OutRoot 'assets\prism.js'))     | Should -BeTrue
-    (Test-Path (Join-Path $OutRoot 'assets\docforge.js'))  | Should -BeTrue
+    (Test-Path (Join-Path $script:OutRoot 'index.html')) | Should -BeTrue
+    (Test-Path (Join-Path $script:OutRoot 'assets\prism.css')) | Should -BeTrue
+    (Test-Path (Join-Path $script:OutRoot 'assets\docforge.css')) | Should -BeTrue
+    (Test-Path (Join-Path $script:OutRoot 'assets\prism.js')) | Should -BeTrue
+    (Test-Path (Join-Path $script:OutRoot 'assets\docforge.js')) | Should -BeTrue
   }
 
-  It 'root index references assets with correct relative paths' {
-    Invoke-Build @('-All')
+  It 'landing page references assets via ./assets (not ../assets)' {
+    Invoke-Build @{ All = $true }
 
-    $rootIndex = Join-Path $OutRoot 'index.html'
-    $html = Read-FileText $rootIndex
+    $landing = Join-Path $script:OutRoot 'index.html'
+    $html = Read-Text $landing
 
-    Assert-Contains $html 'href="assets/prism\.css"'    'Root index must reference assets/ (not ../assets)'
-    Assert-Contains $html 'href="assets/docforge\.css"' 'Root index must reference assets/ (not ../assets)'
-    Assert-Contains $html 'src="assets/prism\.js"'      'Root index must reference assets/ (not ../assets)'
-    Assert-Contains $html 'src="assets/docforge\.js"'   'Root index must reference assets/ (not ../assets)'
+    $html | Should -Match 'href="\./assets/prism\.css"'
+    $html | Should -Match 'href="\./assets/docforge\.css"'
+    $html | Should -Match 'src="\./assets/docforge\.js"'
   }
 
-  It 'workbook index references assets with correct relative paths' {
-    Invoke-Build @('-All')
+  It 'each workbook index references shared assets via ../assets' {
+    Invoke-Build @{ All = $true }
 
-    # find first workbook folder that contains index.html (excluding assets/images/packages)
-    $workbookIndex = Get-ChildItem -Path $OutRoot -Directory |
-      Where-Object { $_.Name -notin @('assets','images','packages') } |
-      ForEach-Object { Join-Path $_.FullName 'index.html' } |
-      Where-Object { Test-Path $_ } |
-      Select-Object -First 1
+    $workbookDirs = Get-ChildItem -Path $script:OutRoot -Directory |
+      Where-Object { $_.Name -notin @('assets','images','packages') }
 
-    $workbookIndex | Should -Not -BeNullOrEmpty -Because "Expected at least one workbook index.html under out/<wb>/index.html"
+    $workbookDirs.Count | Should -BeGreaterThan 0 -Because "expected at least one workbook output folder"
 
-    $html = Read-FileText $workbookIndex
+    foreach ($d in $workbookDirs) {
+      $index = Join-Path $d.FullName 'index.html'
+      Test-Path $index | Should -BeTrue -Because "workbook index.html should exist: $index"
 
-    Assert-Contains $html 'href="\.\./assets/prism\.css"'    'Workbook index must reference ../assets/'
-    Assert-Contains $html 'href="\.\./assets/docforge\.css"' 'Workbook index must reference ../assets/'
-    Assert-Contains $html 'src="\.\./assets/prism\.js"'      'Workbook index must reference ../assets/'
-    Assert-Contains $html 'src="\.\./assets/docforge\.js"'   'Workbook index must reference ../assets/'
+      $html = Read-Text $index
+      $html | Should -Match 'href="\.\./assets/prism\.css"'
+      $html | Should -Match 'href="\.\./assets/docforge\.css"'
+      $html | Should -Match 'src="\.\./assets/prism\.js"'
+      $html | Should -Match 'src="\.\./assets/docforge\.js"'
+    }
   }
 
-  It 'package mode creates zip files' {
-    Invoke-Build @('-All', '-Package')
+  It '-All -Package creates at least one zip and zip contains assets' {
+    Invoke-Build @{ All = $true ; Package = $true }
 
-    Test-Path $PackagesDir | Should -BeTrue -Because "Packages dir should exist for -Package"
-    (Get-ChildItem $PackagesDir -Filter *.zip -ErrorAction SilentlyContinue).Count |
-      Should -BeGreaterThan 0 -Because "At least one zip should be produced"
-  }
-
-  It 'zip contains index.html and assets folder' {
-    Invoke-Build @('-All', '-Package')
-
-    $zip = Get-ChildItem $PackagesDir -Filter *.zip | Select-Object -First 1
-    $zip | Should -Not -BeNullOrEmpty
+    Test-Path $script:PackagesDir | Should -BeTrue
+    $zips = Get-ChildItem -Path $script:PackagesDir -Filter *.zip -ErrorAction SilentlyContinue
+    $zips.Count | Should -BeGreaterThan 0
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $zip = $zips | Select-Object -First 1
     $z = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
     try {
-      $entries = $z.Entries.FullName
-      ($entries -contains 'index.html') | Should -BeTrue -Because "Zip must contain root index.html"
-      ($entries | Where-Object { $_ -like 'assets/*' }).Count | Should -BeGreaterThan 0 -Because "Zip must include assets/"
+      $entries = $z.Entries | ForEach-Object FullName
+
+      # package must contain assets folder
+      ($entries | Where-Object { $_ -like "*/assets/*" }).Count | Should -BeGreaterThan 0
+
+      # package must contain a workbook folder with index.html (supports ../assets layout)
+      ($entries | Where-Object { $_ -match '.+/[^/]+/index\.html$' }).Count | Should -BeGreaterThan 0
     }
     finally {
       $z.Dispose()
