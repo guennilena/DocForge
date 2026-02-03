@@ -171,7 +171,7 @@ This approach:
 
 ## Status
 
-Prototype (v0.6.0).
+Prototype (v0.7.0).
 
 Current features:
 - Excel → HTML generation
@@ -189,6 +189,8 @@ Current features:
 - Git workflow documentation (example workbook)
 - Content-focused documentation (workflows over command reference)
 - Go-to-top navigation for long documents
+- Automated E2E tests with Pester validating build output, asset references, and ZIP packaging
+
 
 ## License
 
